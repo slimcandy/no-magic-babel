@@ -259,6 +259,17 @@
       height: 96px;
     }
   }
+  /* Short phones (iPhone SE): the lead would run over the sun, so the lead shrinks a little
+     and the sun sits lower, in the hills. */
+  @media (width < 40rem) and (height < 44rem) {
+    .lead {
+      font-size: 1rem;
+    }
+    .sun {
+      width: min(44vw, 17rem);
+      translate: -50% 55%;
+    }
+  }
 
   /* ---- The story: a sticky stage, and scenes that scroll past it. */
   .story {
