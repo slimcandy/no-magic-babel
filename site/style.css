@@ -277,7 +277,7 @@
     grid-template-columns: minmax(0, 1fr);
     position: relative;
     border-top: 2px solid var(--color-plum);
-    --card-room: 40svh;
+    --card-room: 46svh;
   }
   .stage,
   .scenes {
@@ -460,6 +460,8 @@
       top: calc(var(--header) + 28svh);
       bottom: auto;
       max-height: none;
+      /* No cap, so no scroll container either (axe: scrollable-region-focusable). */
+      overflow: visible;
       font-size: 1rem;
       & h2 {
         font-size: 1.35rem;
