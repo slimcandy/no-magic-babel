@@ -242,7 +242,12 @@
     font-size: 1.05rem;
     color: var(--color-ink);
     text-wrap: pretty;
-    text-shadow: 0 1px 6px var(--color-night);
+    /* A dark halo: on short phones the lead runs over the sun. */
+    text-shadow:
+      0 0 2px var(--color-night),
+      0 0 2px var(--color-night),
+      0 0 6px var(--color-night),
+      0 1px 14px var(--color-night);
   }
   .hero-builder {
     position: absolute;
