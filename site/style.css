@@ -13,21 +13,6 @@
   font-weight: 700;
   font-display: swap;
 }
-@font-face {
-  font-family: "MonoLisa";
-  src: url("/fonts/MonoLisa-Normal.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "MonoLisa";
-  src: url("/fonts/MonoLisa-Italic.ttf") format("truetype");
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-}
-
 @theme {
   --font-pixel: Silkscreen, ui-monospace, monospace;
   --font-mono: "MonoLisa", ui-monospace, SFMono-Regular, Menlo, monospace;

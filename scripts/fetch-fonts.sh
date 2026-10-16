@@ -1,20 +1,17 @@
 #!/bin/sh
-# Puts the licensed MonoLisa font files into site/public/fonts/ before a build.
-# The font license forbids sharing the files, so they live in the private repo
-# slimcandy/monolisa-font and never in this public one. Optional: without them
-# the build still works and code uses the system monospace font.
+# Puts the licensed MonoLisa web font into site/public/fonts/ before a build: MonoLisa.css and the WOFF2
+# subsets it declares. The font licence forbids sharing the files, so they live in the private repo
+# slimcandy/monolisa-font and never in this public one. Optional: without them the build still
+# works and code uses the system monospace font.
 #
 # Netlify env var (builds scope):
 #   FONTS_DEPLOY_KEY  base64 of a read-only deploy key for slimcandy/monolisa-font
 
 set -e
-DIR="$(dirname "$0")/../site/public/fonts"
+DIR=site/public/fonts
 REPO=git@github.com:slimcandy/monolisa-font.git
-FILES="MonoLisa-Normal.ttf MonoLisa-Italic.ttf"
 
-missing=""
-for f in $FILES; do [ -f "$DIR/$f" ] || missing="$missing $f"; done
-[ -z "$missing" ] && exit 0
+[ -f "$DIR/MonoLisa.css" ] && exit 0
 
 if [ -z "$FONTS_DEPLOY_KEY" ]; then
   echo "fetch-fonts: MonoLisa not found, using system monospace (set FONTS_DEPLOY_KEY to fetch it)"
@@ -32,7 +29,5 @@ GIT_SSH_COMMAND="ssh -i $TMP/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$TM
   git clone --quiet --depth 1 "$REPO" "$TMP/repo"
 
 mkdir -p "$DIR"
-for f in $missing; do
-  cp "$TMP/repo/$f" "$DIR/$f"
-  echo "fetch-fonts: added $f"
-done
+cp "$TMP/repo/woff2/"* "$DIR/"
+echo "fetch-fonts: added MonoLisa.css and $(ls "$TMP/repo/woff2" | grep -c woff2) WOFF2 files"

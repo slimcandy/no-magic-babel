@@ -1,4 +1,4 @@
 node_modules
 dist
 .DS_Store
-/site/public/fonts/MonoLisa-*.ttf
+/site/public/fonts/MonoLisa*
