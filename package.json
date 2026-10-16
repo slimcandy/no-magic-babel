@@ -3,9 +3,29 @@
   "version": "2.0.0",
   "private": true,
   "description": "There is no magic in Babel: a tiny compiler that builds a tree, edits it and prints it back, told as a scroll story.",
-  "type": "module",
-  "license": "MIT",
+  "keywords": [
+    "babel",
+    "compiler",
+    "ast",
+    "acorn",
+    "parser",
+    "code-generation",
+    "typescript",
+    "javascript",
+    "scrollytelling",
+    "education"
+  ],
+  "homepage": "https://babel.avolkov.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slimcandy/no-magic-babel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/slimcandy/no-magic-babel/issues"
+  },
   "author": "Aleksei Volkov",
+  "license": "MIT",
+  "type": "module",
   "scripts": {
     "start": "node src/demo.ts",
     "test": "vitest run",
