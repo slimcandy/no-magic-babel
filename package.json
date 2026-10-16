@@ -1,25 +1,28 @@
 {
-  "name": "babel-educational",
-  "version": "1.0.0",
-  "description": "An educational implementation of Babel-like compiler features",
-  "main": "index.js",
-  "scripts": {
-    "dev": "node --watch ./build/index.js",
-    "typescript": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "babel",
-    "compiler",
-    "ast",
-    "education"
-  ],
+  "name": "no-magic-babel",
+  "version": "2.0.0",
+  "private": true,
+  "description": "There is no magic in Babel: a tiny compiler that builds a tree, edits it and prints it back, told as a scroll story.",
+  "type": "module",
+  "license": "MIT",
   "author": "Aleksei Volkov",
-  "devDependencies": {
-    "typescript": "^5.8.3"
+  "scripts": {
+    "start": "node src/demo.ts",
+    "test": "vitest run",
+    "check": "tsc",
+    "dev": "vite",
+    "prebuild": "sh scripts/fetch-fonts.sh",
+    "build": "vite build"
   },
   "dependencies": {
-    "acorn": "^8.15.0",
-    "source-map": "^0.7.6"
+    "acorn": "8.18.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "22.20.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
   }
 }

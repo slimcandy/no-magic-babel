@@ -1,60 +1,88 @@
 import type { AnyNode } from "acorn";
-import astDefinitions from "./ast-map";
 
-type VisitorFunction<T extends AnyNode = AnyNode> = (node: T) => void;
+/**
+ * Step 2: walk the tree and let the rules edit it.
+ *
+ * The walker doesn't know what any node means. It only knows where each
+ * kind of node keeps its children, from this list. A node type that isn't
+ * in the list stops the walk.
+ */
+export const childKeys: Record<string, string[]> = {
+  Program: ["body"],
+  ExpressionStatement: ["expression"],
+  VariableDeclaration: ["declarations"],
+  VariableDeclarator: ["id", "init"],
+  FunctionDeclaration: ["id", "params", "body"],
+  FunctionExpression: ["id", "params", "body"],
+  ArrowFunctionExpression: ["params", "body"],
+  BlockStatement: ["body"],
+  ReturnStatement: ["argument"],
+  BinaryExpression: ["left", "right"],
+  AssignmentExpression: ["left", "right"],
+  MemberExpression: ["object", "property"],
+  CallExpression: ["callee", "arguments"],
+  NewExpression: ["callee", "arguments"],
+  Identifier: [],
+  Literal: [],
+  ThisExpression: [],
+};
 
-interface Visitor {
-  enter?: VisitorFunction;
-  exit?: VisitorFunction;
+export type Context = {
+  /** The nodes above this one: Program first, the parent last. */
+  ancestors: AnyNode[];
+  /** Do one step of a rule. Each step is one small, named change. */
+  step(what: string, change: () => void): void;
+};
+
+type Visitor = {
+  [T in AnyNode["type"]]?: (node: Extract<AnyNode, { type: T }>, context: Context) => void;
+};
+
+/** A rule says which node type it wants and what to change. Babel calls it a plugin. */
+export type Rule = {
+  name: string;
+  visitor: Visitor;
+};
+
+/** Lets the page watch the walk. The compiler works without them. */
+export type Hooks = {
+  enter?(node: AnyNode): void;
+  exit?(node: AnyNode): void;
+  step?(rule: Rule, what: string, node: AnyNode): void;
+};
+
+export function children(node: AnyNode): AnyNode[] {
+  const keys = childKeys[node.type];
+  if (!keys) throw new Error(`I don't know where a ${node.type} keeps its children`);
+
+  const fields = node as unknown as Record<string, AnyNode | AnyNode[] | null>;
+  return keys.flatMap((key) => fields[key] ?? []);
 }
 
-export interface Visitors extends Visitor {
-  [nodeType: string]: Visitor | VisitorFunction | undefined;
-}
+export function traverse(ast: AnyNode, rules: Rule[], hooks: Hooks = {}): void {
+  const ancestors: AnyNode[] = [];
 
-function getNodeField<T>(node: AnyNode, field: string): T | undefined {
-  return (node as any)[field];
-}
+  function visit(node: AnyNode) {
+    hooks.enter?.(node);
 
-function traverse(node: AnyNode, visitors: Visitors) {
-  function visit(currentNode: AnyNode) {
-    // Get the node-specific visitor if defined
-    let specificVisitor = visitors[currentNode.type];
-
-    // Normalize function-style visitor to { enter }
-    if (typeof specificVisitor === "function") {
-      specificVisitor = { enter: specificVisitor };
+    for (const rule of rules) {
+      const visitor = rule.visitor[node.type] as ((node: AnyNode, context: Context) => void) | undefined;
+      visitor?.(node, {
+        ancestors,
+        step(what, change) {
+          change();
+          hooks.step?.(rule, what, node);
+        },
+      });
     }
 
-    // === ENTER HOOKS ===
-    visitors.enter?.(currentNode);
-    specificVisitor?.enter?.(currentNode);
+    // Read the children after the rules ran: a rule may have changed them.
+    ancestors.push(node);
+    for (const child of children(node)) visit(child);
+    ancestors.pop();
 
-    const astDefinition = astDefinitions.get(currentNode.type);
-    if (astDefinition) {
-      for (const property of astDefinition.visitor) {
-        const nodeValue = getNodeField<AnyNode | AnyNode[]>(
-          currentNode,
-          property
-        );
-
-        if (Array.isArray(nodeValue)) {
-          for (const child of nodeValue) {
-            if (child && typeof child.type === "string") {
-              visit(child);
-            }
-          }
-        } else if (nodeValue && typeof nodeValue.type === "string") {
-          visit(nodeValue);
-        }
-      }
-    }
-
-    // === EXIT HOOKS ===
-    specificVisitor?.exit?.(currentNode);
-    visitors.exit?.(currentNode);
+    hooks.exit?.(node);
   }
 
-  visit(node);
+  visit(ast);
 }
-export default traverse;

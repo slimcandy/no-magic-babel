@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>No magic in Babel</title>
+    <meta name="description" content="Babel doesn't understand JavaScript. It builds a tree, edits it with rules people wrote, and prints it back. A scroll story with a tiny compiler." />
+    <meta name="theme-color" content="#140a24" />
+    <link rel="preload" href="/fonts/Silkscreen-Bold-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <a href="#story" class="skip">Skip to the story</a>
+
+    <!-- Tailwind Plus "simple" progress bar, horizontal, as the page header. -->
+    <header class="topbar">
+      <a href="#top" class="wordmark">No magic<span> Babel</span></a>
+      <nav aria-label="Babel's three steps" class="flex-1">
+        <ol role="list" class="steps">
+          <li><a href="#parse" data-phase-link="parse"><span>Step 1</span>Parse</a></li>
+          <li><a href="#traverse" data-phase-link="traverse"><span>Step 2</span>Traverse</a></li>
+          <li><a href="#generate" data-phase-link="generate"><span>Step 3</span>Generate</a></li>
+        </ol>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="sky" aria-hidden="true">
+          <svg class="sun" viewBox="0 0 32 32" shape-rendering="crispEdges"></svg>
+          <svg class="hills" viewBox="0 0 54 12" preserveAspectRatio="none" shape-rendering="crispEdges">
+            <path d="M0 12V8h4V6h4V4h3v2h3v2h4V5h3V2h4v3h3v3h4V6h4V3h3v3h4v2h3V5h4v3h4v4z" />
+          </svg>
+          <div class="floor"></div>
+        </div>
+        <div class="hero-text">
+          <p class="kicker">A scroll story · 2026</p>
+          <h1 class="title">There is no magic in Babel</h1>
+          <p class="lead">
+            Babel turns new JavaScript into old JavaScript. It looks smart, but it doesn't understand code. It builds a tree, edits the tree and prints it back as text,
+            following rules that people wrote, step by step. Scroll down and watch it happen to one line of code.
+          </p>
+        </div>
+        <div class="hero-builder" aria-hidden="true"></div>
+      </section>
+
+      <section id="story" class="story" aria-label="The story">
+        <div class="stage">
+          <div class="panel">
+            <p class="panel-label">Input</p>
+            <pre class="code-line"><code id="source"></code></pre>
+          </div>
+          <div class="tree-wrap">
+            <svg id="tree" role="group" aria-label="The tree"></svg>
+            <pre id="json" class="json" hidden></pre>
+          </div>
+          <div class="panel" id="output-panel" hidden>
+            <p class="panel-label">Output</p>
+            <pre class="code-line"><code id="output"></code></pre>
+          </div>
+          <p class="status"><span id="verb" class="verb">Text</span> <span id="say"></span></p>
+        </div>
+
+        <div class="scenes">
+          <article class="scene" data-scene="code">
+            <div class="card">
+              <h2>It's just text</h2>
+              <p>
+                Here's the line we'll follow: a <code>let</code> and an arrow function, two things very old browsers don't know. To Babel, at first, this is only a string of
+                characters.
+              </p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="tokens" data-phase="parse" id="parse">
+            <div class="card">
+              <p class="step-number">Step 1 · Parse</p>
+              <h2>Text → tokens</h2>
+              <p>
+                First the parser cuts the text into tokens, the words of the language: <code>let</code>, <code>greet</code>, <code>=</code>, <code>(</code>, <code>name</code>,
+                <code>)</code>, <code>=&gt;</code> and so on. No meaning yet, just pieces.
+              </p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="tree" data-phase="parse">
+            <div class="card">
+              <h2>Tokens → tree</h2>
+              <p>
+                Then it groups the tokens into a tree, the AST. Each piece of the program becomes a node, and a node keeps its parts in named fields: a declaration has an
+                <code>id</code> and an <code>init</code>, a <code>+</code> has a <code>left</code> and a <code>right</code>.
+              </p>
+              <p class="note">Hover or tap a node to see its piece of the code. Babel has its own parser; this page uses acorn. Same idea, same kind of tree.</p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="node" data-phase="parse">
+            <div class="card">
+              <h2>A node is a plain object</h2>
+              <p>
+                Nothing clever lives in the tree. This is the <code>VariableDeclaration</code> node, as it is in memory. The word <code>let</code> is just a string in a field
+                called <code>kind</code>.
+              </p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="walker" data-phase="traverse" id="traverse">
+            <div class="card">
+              <p class="step-number">Step 2 · Traverse</p>
+              <h2>Meet the walker</h2>
+              <p>
+                The walker visits every node. It enters, goes down into the children, then leaves. It doesn't know what any node means. It carries a rulebook with two rules and
+                checks whether a rule wants the node it's standing on.
+              </p>
+              <ol class="rules">
+                <li><code>let → var</code></li>
+                <li><code>arrow → function</code></li>
+              </ol>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="rule1" data-phase="traverse">
+            <div class="card">
+              <h2>Rule 1: let → var</h2>
+              <p>The rule wants <code>VariableDeclaration</code> nodes. It has one step: if <code>kind</code> is <code>"let"</code>, write <code>"var"</code>.</p>
+              <pre class="snippet"><code>VariableDeclaration(node, { step }) {
+  if (node.kind !== "let") return;
+  step("Change kind from let to var", () => {
+    node.kind = "var";
+  });
+}</code></pre>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="rule2" data-phase="traverse">
+            <div class="card">
+              <h2>Rule 2: arrow → function</h2>
+              <p>
+                This rule wants <code>ArrowFunctionExpression</code> nodes, in two steps. One: change the node's type. Two: a function needs <code>{ }</code> and
+                <code>return</code>, so wrap the old body in two new nodes. Then the walker walks into the new nodes too.
+              </p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="walk" data-phase="traverse">
+            <div class="card">
+              <h2>Then it just keeps walking</h2>
+              <p>No rule wants the other nodes, so the walker only enters and leaves them, all the way back up to the top. Babel calls these two moments “enter” and “exit”.</p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="print" data-phase="generate" id="generate">
+            <div class="card">
+              <p class="step-number">Step 3 · Generate</p>
+              <h2>Tree → text</h2>
+              <p>
+                The printer walks the edited tree once more. For each node type it has a few lines that write text: a <code>VariableDeclaration</code> writes its
+                <code>kind</code>, then its parts, then <code>;</code>. It doesn't care that the tree was edited.
+              </p>
+            </div>
+          </article>
+
+          <article class="scene" data-scene="done" data-phase="generate">
+            <div class="card">
+              <h2>That's all of it</h2>
+              <p>
+                Parse, traverse, generate. Real Babel knows many more node types and has hundreds of rules (it calls them plugins), but each works like these two: someone wrote
+                down the steps for one piece of new JavaScript.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="not-almighty" class="section">
+        <p class="kicker">Bonus level</p>
+        <h2 class="section-title">Babel is not almighty</h2>
+        <div class="prose">
+          <p>
+            A rule does exactly what its steps say, nothing more. Rule 2 has two steps and no idea what <code>this</code> means. Inside an arrow function, <code>this</code> is
+            the <code>this</code> of the function around it. Inside a <code>function</code>, it isn't. So this code breaks:
+          </p>
+        </div>
+
+        <div class="versus">
+          <figure class="result-card">
+            <figcaption>Input</figcaption>
+            <pre><code id="counter-input"></code></pre>
+            <p class="verdict is-good"><code>read()</code> returns <code>1</code></p>
+          </figure>
+          <figure class="result-card">
+            <figcaption>Rule 2 as above: two steps</figcaption>
+            <pre><code id="counter-naive"></code></pre>
+            <p class="verdict is-bad"><code>read()</code> returns <code>undefined</code>. Broken.</p>
+          </figure>
+          <figure class="result-card">
+            <figcaption>Rule 2 with two more steps</figcaption>
+            <pre><code id="counter-fixed"></code></pre>
+            <p class="verdict is-good"><code>read()</code> returns <code>1</code> again</p>
+          </figure>
+        </div>
+
+        <div class="prose">
+          <p>Babel's rule isn't smarter. It has more steps, written by people who hit this bug before:</p>
+          <ol class="rule-steps">
+            <li class="is-added">Find every <code>this</code> inside the arrow</li>
+            <li class="is-added">Add <code>var _this = this;</code> to the function around it, and use <code>_this</code> instead</li>
+            <li>Change the type to <code>FunctionExpression</code></li>
+            <li>Wrap the body in <code>{ return … }</code></li>
+          </ol>
+          <p>
+            The last of the three outputs is exactly what Babel prints for this code. And it's still not everything: <code>arguments</code>, <code>super</code> and
+            <code>new.target</code> behave like <code>this</code>, and each needs steps of its own.
+          </p>
+        </div>
+
+        <div class="not-llm">
+          <p class="not-llm-title">It's not an LLM</p>
+          <p>
+            Babel doesn't read your code and decide what you meant, and it doesn't try something and check if it worked. Same input, same rules, same output, every time. Code that
+            no rule wants passes through unchanged. Code the printer has no lines for stops mine with an error:
+          </p>
+          <pre><code id="error"></code></pre>
+        </div>
+
+        <p class="check">
+          Check it yourself:
+          <a href="https://github.com/babel/babel/blob/main/packages/babel-traverse/src/path/conversion.ts">Babel's arrow function steps</a> ·
+          <a href="https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/plugin-handbook.md">Babel plugin handbook</a> ·
+          <a href="https://astexplorer.net/">AST Explorer</a>
+        </p>
+      </section>
+
+      <section id="source" class="section">
+        <p class="kicker">Inventory</p>
+        <h2 class="section-title">The whole compiler</h2>
+        <div class="prose">
+          <p>
+            Everything on this page ran in your browser just now, from these files: <span id="total-lines">a few hundred</span> lines of TypeScript, without comments and blank
+            lines. Parsing is acorn's work.
+          </p>
+        </div>
+        <div id="files" class="files"></div>
+      </section>
+
+      <section id="run" class="section">
+        <p class="kicker">Continue?</p>
+        <h2 class="section-title">Run it yourself</h2>
+        <div class="prose">
+          <p>The same steps, printed in your terminal. You need Node.js 22.18 or newer.</p>
+        </div>
+        <ol class="run-steps">
+          <li>
+            <p>Get the code</p>
+            <pre><code>git clone https://github.com/slimcandy/no-magic-babel
+cd no-magic-babel
+npm install</code></pre>
+          </li>
+          <li>
+            <p>Watch the three steps</p>
+            <pre><code>npm start</code></pre>
+          </li>
+          <li>
+            <p>Run the tests: the output must parse as old JavaScript and do the same thing as the input</p>
+            <pre><code>npm test</code></pre>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Made by <a href="https://avolkov.dev">Aleksei Volkov</a>, with Claude Code. It started from Mohammad Taheri's article
+        <a href="https://mohammadtaheri.medium.com/write-your-own-babel-54ab880f1dfd">Write your own Babel</a>.
+        <a href="https://github.com/slimcandy/no-magic-babel">Source on GitHub</a>.
+      </p>
+      <p>
+        How this page fakes 1986: the pixels are SVG rectangles with crisp edges, the neon is Display P3 colour no 1986 screen could show, and the sun sets as you scroll, with a
+        scroll-driven CSS animation. Titles use Silkscreen by Jason Kottke (SIL Open Font License).
+      </p>
+    </footer>
+  </body>
+</html>

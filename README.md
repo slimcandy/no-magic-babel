@@ -1,75 +1,60 @@
-# Educational Babel version
+# No magic in Babel
 
-This is an educational project that demonstrates how Babel works under the hood by implementing a simplified compiler with three main phases:
+Babel turns new JavaScript into old JavaScript. It looks smart, but it doesn't understand code. It builds a tree, edits the tree and prints it back as text, following rules that people wrote, step by step. This repo is a tiny compiler that does the same, and a scroll story that shows every step.
 
-1. **Parsing** - converts source code to an Abstract Syntax Tree (AST)
-2. **Transforming** - traverses and modifies the AST
-3. **Generating** - converts the transformed AST back to source code
+**Live:** [babel.avolkov.dev](https://babel.avolkov.dev)
 
-## Features
+## The three steps
 
-- Parser using Acorn
-- AST traversal with visitor pattern
-- Code generation with proper formatting
-- Source map support (basic)
-- TypeScript type safety
+1. **Parse: text → tree.** [acorn](https://github.com/acornjs/acorn) cuts the text into tokens and builds a tree of plain objects (the AST). Babel has its own parser; the idea is the same.
+2. **Traverse: walk the tree, let the rules edit it.** The walker enters every node, goes into its children and leaves. It knows only where each node type keeps its children. A rule names the node type it wants and changes it in small, named steps.
+3. **Generate: tree → text.** The printer walks the edited tree and writes a few characters for each node.
 
-## How It Works
+```
+let greet = (name) => "Hi, " + name;
+```
 
-1. **Parsing**: Uses Acorn to parse JavaScript code into an AST
-2. **Traversing**: Walks the AST with visitor callbacks (enter/exit hooks)
-3. **Generating**: Reconstructs JavaScript code from the AST with proper indentation
+becomes, with the rules `let → var` and `arrow → function`:
 
-## Installation
+```js
+var greet = function (name) {
+  return "Hi, " + name;
+};
+```
 
-```bash
+the same output as Babel's own plugins.
+
+## Not almighty
+
+The arrow rule in `src/rules/arrow-functions.ts` has two steps and no idea what `this` means, so it breaks code like `this.read = () => this.count`. `src/rules/arrow-functions-this.ts` adds the two steps Babel uses (`var _this = this`). Nothing guesses: a node type the walker or the printer has no lines for stops with an error, e.g. `I don't know how to print a ClassDeclaration`.
+
+## Files
+
+| File | What it does |
+|---|---|
+| `src/parse.ts` | text → tree, with acorn |
+| `src/traverse.ts` | the walker, and the list of where each node type keeps its children |
+| `src/rules/*.ts` | the rules, written as steps |
+| `src/generate.ts` | tree → text |
+| `src/demo.ts` | `npm start`: the three steps in the terminal |
+| `tests/compile.test.ts` | the judge: the output must parse as ES5 (acorn with `ecmaVersion: 5`) and do the same thing as the input when run |
+| `site/` | the scroll story. `record.ts` runs the real compiler once and keeps every moment as a frame; `tree.ts` draws the frames |
+
+## Run it
+
+Node.js 22.18 or newer.
+
+```sh
+git clone https://github.com/slimcandy/no-magic-babel
+cd no-magic-babel
 npm install
+npm start     # the three steps, printed
+npm test      # Vitest
+npm run dev   # the page, at http://localhost:5173
 ```
 
-Run typescript in watch mode
+## Credits
 
-```bash
-npm run typescript
-```
+It started from Mohammad Taheri's article [Write your own Babel](https://mohammadtaheri.medium.com/write-your-own-babel-54ab880f1dfd). Also useful: the [Babel plugin handbook](https://github.com/jamiebuilds/babel-handbook) and [AST Explorer](https://astexplorer.net/). The page's pixel font is [Silkscreen](https://fonts.google.com/specimen/Silkscreen) by Jason Kottke (SIL Open Font License).
 
-Run project in watch mode
-
-```bash
-npm run dev
-```
-
-## Usage
-
-```javascript
-import parser from "./parser";
-import traverse from "./traverse";
-import generate from "./generator";
-
-const code = `let x = 10;`;
-const ast = parser(code);
-
-traverse(ast, {
-  Identifier(node) {
-    if (node.name === "x") {
-      node.name = "y";
-    }
-  },
-});
-
-const { code: output } = generate(ast);
-console.log(output); // "let y = 10;"
-```
-
-## Project Structure
-
-- `parser.ts`: Converts source code to AST using Acorn
-- `traverse.ts`: Implements AST traversal with visitor pattern
-- `generator.ts`: Converts AST back to JavaScript code
-- `ast-map.ts`: Defines AST node types and their traversal properties
-
-## Learning Resources
-
-- [Write your own Babel](https://mohammadtaheri.medium.com/write-your-own-babel-54ab880f1dfd) by Mohammad Taheri
-- [Babel Plugin Handbook](https://github.com/jamiebuilds/babel-handbook)
-- [AST Explorer](https://astexplorer.net/)
-- [Acorn Documentation](https://github.com/acornjs/acorn)
+MIT licence.

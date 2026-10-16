@@ -1,50 +1,15 @@
-import parser from "./parser";
-import traverse from "./traverse";
-import generate from "./generator";
+import { parse } from "./parse.ts";
+import { traverse, type Rule } from "./traverse.ts";
+import { generate } from "./generate.ts";
 
-// === Source Code ===
-const code = `
-let name = "Alex";
-let age = 21;
+export { parse, traverse, generate, type Rule };
+export { letToVar } from "./rules/let-to-var.ts";
+export { arrowFunctions } from "./rules/arrow-functions.ts";
+export { arrowFunctionsThis } from "./rules/arrow-functions-this.ts";
 
-const showMyAge = () => {
-  return age;
-};
-console.log(showMyAge());
-`;
-
-console.log("🔹 Original Source Code:\n");
-console.log(code);
-
-// === Phase 1: Parse ===
-const ast = parser(code);
-
-console.log("\n📦 Parsed AST:");
-console.log(JSON.stringify(ast, null, 2));
-
-// === Phase 2: Transform ===
-traverse(ast, {
-  Identifier(node) {
-    if (node.type === "Identifier") {
-      if (node.name === "name") {
-        node.name = "firstName";
-      }
-    }
-  },
-  VariableDeclaration(node) {
-    if (node.type === "VariableDeclaration") {
-      if (node.kind === "let") {
-        node.kind = "var";
-      }
-    }
-  },
-});
-
-console.log("\n🔁 Transformed AST:");
-console.log(JSON.stringify(ast, null, 2));
-
-// === Phase 3: Generate Code ===
-const { code: outputCode } = generate(ast);
-
-console.log("\n🧾 Generated Output Code:\n");
-console.log(outputCode);
+/** All of it: text → tree → edited tree → text. */
+export function compile(code: string, rules: Rule[]): string {
+  const ast = parse(code);
+  traverse(ast, rules);
+  return generate(ast);
+}
