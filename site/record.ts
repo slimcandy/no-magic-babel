@@ -61,7 +61,7 @@ export function record(code: string, rules: Rule[]) {
     order.push(node);
     node.children.forEach(walk);
   })(tree);
-  order.forEach((node, index) => push({ tree, shown: index + 1, at: node.id, verb: "make", say: `acorn makes a ${node.type}` }));
+  order.forEach((node, index) => push({ tree, shown: index + 1, at: node.id, verb: "make", say: `acorn makes ${/^[AEIOU]/.test(node.type) ? "an" : "a"} ${node.type}` }));
   const parsed = frames.length - 1;
 
   // 2. Traverse: the walker enters and leaves every node, and the rules edit some.
