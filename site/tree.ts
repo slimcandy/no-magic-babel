@@ -171,7 +171,7 @@ export class TreeView {
     for (const node of visible) {
       let group = this.groups.get(node.id);
       if (!group) {
-        group = this.createNode(node);
+        group = this.createNode();
         this.groups.set(node.id, group);
         this.nodeLayer.append(group);
         const box = boxes.get(node.id)!;
@@ -210,7 +210,7 @@ export class TreeView {
     return { x: box.x + 2, y: box.y - SPRITE_H * 1.25 + 1 };
   }
 
-  private createNode(node: ViewNode): SVGGElement {
+  private createNode(): SVGGElement {
     const group = el("g", { class: "node", tabindex: 0, role: "img" });
     group.append(el("rect", { class: "box" }), el("text", { class: "key" }), el("text", { class: "type" }), el("text", { class: "label" }));
     group.addEventListener("pointerenter", () => this.onHover(this.find(Number(group.dataset.id))));
