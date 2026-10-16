@@ -411,6 +411,12 @@
     font-size: 0.85rem;
     color: var(--color-dim);
   }
+  /* "Hover or tap a node": on phones the list tree is too small to tap. */
+  .wide-only {
+    @media (width < 64rem) {
+      display: none;
+    }
+  }
   .rules {
     margin-top: 0.5rem;
     display: flex;
