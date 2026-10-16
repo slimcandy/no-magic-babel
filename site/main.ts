@@ -209,6 +209,19 @@ for (const [name, text] of files) {
 }
 $("#total-lines").textContent = String(total);
 
+// ---- A code block or a card that scrolls gets a tab stop, so the keyboard can scroll it too.
+
+function focusScrollable() {
+  for (const box of document.querySelectorAll<HTMLElement>("pre, .card")) {
+    if (box.scrollWidth > box.clientWidth || box.scrollHeight > box.clientHeight) box.tabIndex = 0;
+    else box.removeAttribute("tabindex");
+  }
+}
+focusScrollable();
+document.fonts.ready.then(focusScrollable);
+addEventListener("resize", focusScrollable);
+document.addEventListener("toggle", focusScrollable, true);
+
 // ---- Decoration: the builder on the hero, and the pixel sun.
 
 $(".hero-builder").innerHTML = sprite("a", "hero-sprite");
