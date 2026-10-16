@@ -763,6 +763,19 @@
   }
 }
 
+/* More contrast, when the OS asks for it: the neon pink and the red go lighter (AAA on the night
+   background), and the see-through header and cards go solid. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-pink: oklch(0.8 0.2 350);
+    --color-bad: oklch(0.8 0.16 25);
+  }
+  .topbar,
+  .card {
+    background: var(--color-night);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .floor,
   .sun,
