@@ -38,6 +38,7 @@ The arrow rule in `src/rules/arrow-functions.ts` has two steps and no idea what 
 | `src/generate.ts` | tree → text |
 | `src/demo.ts` | `npm start`: the three steps in the terminal |
 | `tests/compile.test.ts` | the judge: the output must parse as ES5 (acorn with `ecmaVersion: 5`) and do the same thing as the input when run |
+| `scripts/share-card.mjs` | makes the link-preview card and the home-screen icon from the page (needs Playwright) |
 | `site/` | the scroll story. `record.ts` runs the real compiler once and keeps every moment as a frame; `tree.ts` draws the frames |
 
 ## Run it
